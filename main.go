@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -15,11 +16,12 @@ func main() {
 	r := gin.Default()
 
 	// Роуты API
-	r.Get("tasks/", getAllTasksHandle)
+	r.GET("tasks/", getAllTasksHandle)
 	r.GET("/tasks/:id", getTaskByIDHandle)
 	r.POST("/tasks", createTaskHandle)
 	r.PUT("/tasks/:id", updateTaskHandle)
 	r.DELETE("/tasks/:id", deleteTaskHandle)
+	r.PATCH("/tasks/:id", patchTaskHandle)
 
 	// Запуск сервера
 	r.Run(":8080")
@@ -32,6 +34,7 @@ func getAllTasksHandle(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
 	c.JSON(http.StatusOK, tasks)
 }
 
@@ -45,7 +48,7 @@ func getTaskByIDHandle(c *gin.Context) {
 
 	task, err := getTaskByID(id)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Task not found"})
+		c.JSON(http.StatusNotFound, gin.H{"error": "Задача не найдена"})
 		return
 	}
 
@@ -84,6 +87,7 @@ func updateTaskHandle(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+
 	err = updateTask(id, updTask.Title, updTask.Description, updTask.Done)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Задача не найдена"})
@@ -108,5 +112,29 @@ func deleteTaskHandle(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusNoContent, gin.H{})
+	c.JSON(http.StatusNoContent, gin.H{"message": fmt.Sprintf("Задача id=%d успешно удалена", id)})
+}
+
+// Частичное изменение задачи
+func patchTaskHandle(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Недействительный ID"})
+		return
+	}
+
+	var patchedTask Task
+	if err := c.ShouldBindJSON(&patchedTask); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if err := patchTask(id, patchedTask); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	//c.JSON(http.StatusOK, gin.H{"message": "Задача частично изменена"})
+	patchedTask.ID = id
+	c.JSON(http.StatusOK, patchedTask)
 }

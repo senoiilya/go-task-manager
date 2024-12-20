@@ -15,7 +15,10 @@ const (
 	// Получение одной задачи по айди
 	GetTaskByID = `SELECT * FROM tasks WHERE id = ?;`
 	// Обновление задачи по айди
-	UpdateTask = `UPDATE tasks SET title = ?, description = ?, done = ?, WHERE id = ?`
+	UpdateTask = `UPDATE tasks SET title = ?, description = ?, done = ? WHERE id = ?;`
 	// Удаление задачи по айди
-	DeleteTask = `DELETE FROM tasks WHERE id = ?`
+	DeleteTask = `DELETE FROM tasks WHERE id = ?;`
+	// Частичное изменение задачи
+	//PatchTask = `UPDATE tasks SET title = ? WHERE id = ?;`
+	PatchTask = "UPDATE tasks SET %s WHERE id = ?;"
 )
